@@ -1,0 +1,293 @@
+﻿html
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consulta de Alumnos</title>
+    <link rel="stylesheet" href="https://cloudflare.com">
+    <style>
+        :root {
+            --primary: #1e3a8a;
+            --background: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--background);
+            color: var(--text-main);
+            padding-bottom: 20px;
+        }
+
+        .header {
+            background-color: var(--primary);
+            color: white;
+            padding: 15px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .search-box {
+            position: relative;
+            width: 100%;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 10px 40px 10px 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            outline: none;
+        }
+
+        .search-box i {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+
+        .container {
+            padding: 15px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .student-info h2 {
+            font-size: 1.05rem;
+            color: var(--text-main);
+            margin-bottom: 4px;
+            text-transform: capitalize;
+        }
+
+        .student-info p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .badge {
+            background-color: #e0f2fe;
+            color: #0369a1;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .card-details {
+            display: none;
+            padding-top: 12px;
+            margin-top: 12px;
+            border-top: 1px solid #f3f4f6;
+        }
+
+        .card.active .card-details {
+            display: block;
+        }
+
+        .detail-item {
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+
+        .detail-item span {
+            font-weight: 600;
+            color: var(--text-muted);
+            display: block;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .btn-telegram { background-color: #22d3ee; color: #0369a1; }
+        .btn-phone { background-color: #bbf7d0; color: #15803d; }
+        .btn-doc { background-color: #e5e7eb; color: #374151; grid-column: span 2; }
+
+        .status-msg { text-align: center; padding: 20px; color: var(--text-muted); font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Control de Alumnos y Seguimiento</h1>
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Buscar por nombre o cédula...">
+            <i class="fa-solid fa-magnifying-glass"></i>
+        </div>
+    </div>
+
+    <div class="container" id="studentsContainer">
+        <p class="status-msg">Cargando información en tiempo real...</p>
+    </div>
+
+    <script>
+        // Enlace oficial de tu Google Sheets unificado y corregido
+        const GOOGLE_SHEET_CSV_URL = "https://google.com";
+        let studentsData = [];
+
+        // Separador avanzado de texto para celdas con comillas y comas internas
+        function splitCSVLine(line) {
+            let matches = line.match(/(".*?"|[^,\r\n]+)(?=\s*,|\s*$)?/g) || [];
+            return matches.map(val => val.replace(/^"|"$/g, '').trim());
+        }
+
+        async function fetchStudents() {
+            try {
+                const response = await fetch(GOOGLE_SHEET_CSV_URL);
+                if (!response.ok) throw new Error("No se pudo conectar");
+                const data = await response.text();
+                
+                const lines = data.split(/\r?\n/);
+                if (lines.length === 0) return;
+
+                // Leer y limpiar la fila de títulos de columna (cabecera)
+                const headers = splitCSVLine(lines[0]).map(h => h.toLowerCase().trim());
+                
+                // Mapear los índices exactos buscando los nombres correspondientes en tu Sheets
+                const idxNombres = headers.findIndex(h => h.includes('nombre'));
+                const idxApellidos = headers.findIndex(h => h.includes('apellido'));
+                const idxCedula = headers.findIndex(h => h.includes('cédula') || h.includes('cedula') || h.includes('ci'));
+                const idxPnf = headers.findIndex(h => h.includes('pnf'));
+                const idxPeriodo = headers.findIndex(h => h.includes('período') || h.includes('periodo'));
+                const idxCorreo = headers.findIndex(h => h.includes('correo') || h.includes('email'));
+                const idxTelefono = headers.findIndex(h => h.includes('teléfono') || h.includes('telefono'));
+                const idxTelegram = headers.findIndex(h => h.includes('telegram'));
+                const idxDireccion = headers.findIndex(h => h.includes('dirección') || h.includes('direccion'));
+                const idxDocumento = headers.findIndex(h => h.includes('documento') || h.includes('archivo'));
+
+                studentsData = [];
+
+                // Recorrer el resto de las filas del documento
+                for (let i = 1; i < lines.length; i++) {
+                    if (!lines[i].trim()) continue; // saltar líneas vacías
+                    
+                    const row = splitCSVLine(lines[i]);
+                    
+                    // Asegurar que la fila contenga datos mínimos reales antes de procesarla
+                    const nombreReal = idxNombres !== -1 ? row[idxNombres] : '';
+                    const apellidoReal = idxApellidos !== -1 ? row[idxApellidos] : '';
+                    if (!nombreReal && !apellidoReal) continue;
+
+                    studentsData.push({
+                        nombres: nombreReal || 'Sin nombre',
+                        apellidos: apellidoReal || '',
+                        cedula: idxCedula !== -1 ? row[idxCedula] : 'N/A',
+                        pnf: idxPnf !== -1 ? row[idxPnf] : 'General',
+                        periodo: idxPeriodo !== -1 ? row[idxPeriodo] : 'N/A',
+                        correo: idxCorreo !== -1 ? row[idxCorreo] : 'N/A',
+                        direccion: idxDireccion !== -1 ? row[idxDireccion] : 'N/A',
+                        telefono: idxTelefono !== -1 ? row[idxTelefono] : '',
+                        telegram: idxTelegram !== -1 ? row[idxTelegram] : '',
+                        documento: idxDocumento !== -1 ? row[idxDocumento] : '#'
+                    });
+                }
+
+                renderStudents(studentsData);
+            } catch (error) {
+                document.getElementById('studentsContainer').innerHTML = `<p class="status-msg" style="color:red; font-weight:bold;">⚠️ Error al sincronizar con Google Sheets.<br><span style="font-size:0.8rem; font-weight:normal; color:#6b7280;">Asegúrate de que la hoja de cálculo siga configurada como "Publicada en la web" en formato CSV de forma pública.</span></p>`;
+                console.error(error);
+            }
+        }
+
+        function renderStudents(students) {
+            const container = document.getElementById('studentsContainer');
+            if (students.length === 0) {
+                container.innerHTML = `<p class="status-msg">No se encontraron alumnos registrados.</p>`;
+                return;
+            }
+
+            container.innerHTML = "";
+            students.forEach((student) => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <div class="card-header" onclick="toggleCard(this.parentNode)">
+                        <div class="student-info">
+                            <h2>${student.nombres} ${student.apellidos}</h2>
+                            <p>C.I: ${student.cedula}</p>
+                        </div>
+                        <span class="badge">${student.pnf}</span>
+                    </div>
+                    <div class="card-details">
+                        <div class="detail-item"><span>Período Académico</span>${student.periodo}</div>
+                        <div class="detail-item"><span>Correo Electrónico</span>${student.correo}</div>
+Usa el código con precaución.
+Dirección de Habitación${student.direccion}
+ Llamar
+ Telegram
+ Ver Cédula Adjunta
+
+
+`;
+container.appendChild(card);
+});
+}
+function toggleCard(cardElement) {
+document.querySelectorAll('.card').forEach(c => {
+if (c !== cardElement) c.classList.remove('active');
+});
+cardElement.classList.toggle('active');
+}
+document.getElementById('searchInput').addEventListener('input', (e) => {
+const term = e.target.value.toLowerCase().trim();
+const filtered = studentsData.filter(student => {
+const fullName = ${student.nombres} ${student.apellidos}.toLowerCase();
+const idCard = student.cedula.toLowerCase();
+return fullName.includes(term) || idCard.includes(term);
+});
+renderStudents(filtered);
+});
+fetchStudents();
