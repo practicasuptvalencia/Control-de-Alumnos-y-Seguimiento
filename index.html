@@ -166,10 +166,7 @@
     <div class="container" id="studentsContainer">
         <p class="status-msg">Cargando información en tiempo real...</p>
     </div>
-
-<script>
-   <script>
-    // Tu enlace correcto de Google Sheets en formato CSV
+    <script>
     const GOOGLE_SHEET_CSV_URL = "https://google.com"; 
     
     let studentsData = [];
@@ -199,10 +196,8 @@
             if (!response.ok) throw new Error("Falla de red");
             
             let text = await response.text();
-            text = text.replace(/^\ufeff/, ''); // Quita caracteres basura de codificación
-            
-            // CORRECCIÓN AQUÍ: Separación limpia de líneas sin romper la sintaxis
-            const lines = text.split(/\r?\n/);
+            text = text.replace(/^\ufeff/, '');
+            const lines = text.split(\(/\r\)?\n/);
             if (lines.length === 0) return;
 
             studentsData = [];
@@ -211,24 +206,22 @@
                 if (!lines[i].trim()) continue;
                 const row = parseCSVLine(lines[i]);
                 
-                // Valida si la columna B (índice 1) tiene el nombre de un alumno válido
                 if (!row[1] || row[1].toLowerCase().includes('nombres')) continue;
 
                 studentsData.push({
-                    nombres: row[1],        // Columna B: Nombres
-                    apellidos: row[2] || '',   // Columna C: Apellidos
-                    cedula: row[3] || 'N/A',   // Columna D: Cédula
-                    documento: row[4] || '#',  // Columna E: Adjunto
-                    pnf: row[5] || 'General',  // Columna F: Carrera
-                    periodo: row[6] || 'N/A',  // Columna G: Período
-                    correo: row[7] || 'N/A',   // Columna H: Correo
-                    telefono: row[8] || '',    // Columna I: Teléfono
-                    telegram: row[9] || '',    // Columna J: Telegram
-                    direccion: row[10] || 'N/A' // Columna K: Dirección
+                    nombres: row[1],
+                    apellidos: row[2] || '', 
+                    cedula: row[3] || 'N/A', 
+                    documento: row[4] || '#', 
+                    pnf: row[5] || 'General', 
+                    periodo: row[6] || 'N/A', 
+                    correo: row[7] || 'N/A', 
+                    telefono: row[8] || '', 
+                    telegram: row[9] || '', 
+                    direccion: row[10] || 'N/A' 
                 });
             }
             renderStudents(studentsData);
-            
         } catch (error) {
             document.getElementById('studentsContainer').innerHTML = `
                 <p class="status-msg" style="color:red; font-weight:bold;">
@@ -295,3 +288,4 @@
 </script>
 </body>
 </html>
+
