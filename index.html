@@ -212,20 +212,21 @@
                 if (!lines[i].trim()) continue;
                 const row = parseCSVLine(lines[i]);
                 
-                const nombreReal = row[1];
-                if (!nombreReal || nombreReal.toLowerCase().includes('nombres')) continue;
+               const nombreReal = row[1];
+        if (!nombreReal || nombreReal.toLowerCase().includes('nombres')) continue;
 
-                studentsData.push({
-                    nombres: nombreReal,
-                    apellidos: row[2] || '', 
-                    cedula: row[3] || 'N/A', 
-                    documento: row[4] || '#', 
-                    pnf: row[5] || 'General', 
-                    periodo: row[6] || 'N/A', 
-                    correo: row[7] || 'N/A', 
-                    telefono: row[8] || '', 
-                    telegram: row[9] || '', 
-                    direccion: row[10] || 'N/A' 
+        studentsData.push({
+            nombres: nombreReal,
+            apellidos: row[2] || '', 
+            cedula: row[3] || 'N/A', 
+            documento: row[4] || '#', 
+            pnf: row[5] || 'General', 
+            periodo: row[6] || 'N/A', 
+            correo: row[7] || 'N/A', 
+            telefono: row[8] || '', 
+            telegram: row[9] || '', 
+            direccion: row[10] || 'N/A' 
+        });
                 });
             }
             renderStudents(studentsData);
