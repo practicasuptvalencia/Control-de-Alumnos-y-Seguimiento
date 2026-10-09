@@ -168,8 +168,9 @@
     </div>
 
 <script>
-    // ⚠️ REEMPLAZA ESTE ENLACE POR TU URL DE GOOGLE SHEETS PUBLICADO COMO CSV
-    const GOOGLE_SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSC6F04W7aiGWWM72YjD9Efx52gSRboWESZJjFw3SOHKaZaF7Xe-Ssfwj5Hhv7v839Wx87jBI-xd9Rm/pub?gid=0&single=true&output=csv"; 
+   <script>
+    // Tu enlace correcto de Google Sheets en formato CSV
+    const GOOGLE_SHEET_CSV_URL = "https://google.com"; 
     
     let studentsData = [];
 
@@ -194,16 +195,12 @@
 
     async function fetchStudents() {
         try {
-            if(GOOGLE_SHEET_CSV_URL === "TU_ENLACE_DE_GOOGLE_SHEETS_AQUÍ") {
-                throw new Error("No has configurado tu URL de Google Sheets");
-            }
-
             const response = await fetch(GOOGLE_SHEET_CSV_URL);
             if (!response.ok) throw new Error("Falla de red");
             
             let text = await response.text();
             text = text.replace(/^\ufeff/, '');
-            const lines = text.split(/\r?\n/);
+            const lines = text.split(\(/\r\)?\n/);
             if (lines.length === 0) return;
 
             studentsData = [];
@@ -212,21 +209,20 @@
                 if (!lines[i].trim()) continue;
                 const row = parseCSVLine(lines[i]);
                 
-               const nombreReal = row[1];
-        if (!nombreReal || nombreReal.toLowerCase().includes('nombres')) continue;
+                // Si la columna B (Nombres) está vacía o dice "Nombres", saltamos la fila
+                if (!row[1] || row[1].toLowerCase().includes('nombres')) continue;
 
-        studentsData.push({
-            nombres: nombreReal,
-            apellidos: row[2] || '', 
-            cedula: row[3] || 'N/A', 
-            documento: row[4] || '#', 
-            pnf: row[5] || 'General', 
-            periodo: row[6] || 'N/A', 
-            correo: row[7] || 'N/A', 
-            telefono: row[8] || '', 
-            telegram: row[9] || '', 
-            direccion: row[10] || 'N/A' 
-        });
+                studentsData.push({
+                    nombres: row[1],
+                    apellidos: row[2] || '', 
+                    cedula: row[3] || 'N/A', 
+                    documento: row[4] || '#', 
+                    pnf: row[5] || 'General', 
+                    periodo: row[6] || 'N/A', 
+                    correo: row[7] || 'N/A', 
+                    telefono: row[8] || '', 
+                    telegram: row[9] || '', 
+                    direccion: row[10] || 'N/A' 
                 });
             }
             renderStudents(studentsData);
@@ -250,7 +246,6 @@
             const card = document.createElement('div');
             card.className = 'card';
             
-            // Limpieza básica del nick de Telegram
             const teleUser = student.telegram.replace(/[@- ]/g, '');
 
             card.innerHTML = `
@@ -283,9 +278,17 @@
         cardElement.classList.toggle('active');
     }
 
-    // Lógica del buscador completada correctamente
     document.getElementById('searchInput').addEventListener('input', (e) => {
         const searchTerm = e.target.value.toLowerCase().trim();
         const filteredStudents = studentsData.filter(student => {
             const nombreCompleto = `${student.nombres} ${student.apellidos}`.toLowerCase();
             const cedulaString = student.cedula.toString().toLowerCase();
+            return nombreCompleto.includes(searchTerm) || cedulaString.includes(searchTerm);
+        });
+        renderStudents(filteredStudents);
+    });
+
+    window.addEventListener('DOMContentLoaded', fetchStudents);
+</script>
+</body>
+</html>
