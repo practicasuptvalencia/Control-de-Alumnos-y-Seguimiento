@@ -1,10 +1,10 @@
-html
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Consulta de Alumnos</title>
+    <!-- Iconos correctos para los botones -->
     <link rel="stylesheet" href="https://cloudflare.com">
     <style>
         :root {
@@ -174,6 +174,7 @@ html
     </div>
 
     <script>
+        // Enlace oficial de tu hoja de cálculo restituido
         const GOOGLE_SHEET_CSV_URL = "https://google.com";
         let studentsData = [];
 
@@ -186,12 +187,14 @@ html
             try {
                 const response = await fetch(GOOGLE_SHEET_CSV_URL);
                 if (!response.ok) throw new Error("No se pudo conectar");
-                const data = await response.text();
+                let data = await response.text();
                 
+                // Limpieza del formato invisible BOM de Google Sheets
+                data = data.replace(/^\ufeff/, '');
+
                 const lines = data.split(/\r?\n/);
                 if (lines.length === 0) return;
 
-                // Leer encabezados mapeando los nombres exactos de tu hoja
                 const headers = splitCSVLine(lines[0]).map(h => h.toLowerCase().trim());
                 
                 const idxNombres = headers.findIndex(h => h.includes('nombre'));
@@ -260,8 +263,6 @@ html
                         <div class="detail-item"><span>Período Académico</span>${student.periodo}</div>
                         <div class="detail-item"><span>Correo Electrónico</span>${student.correo}</div>
                         <div class="detail-item"><span>Dirección de Habitación</span>${student.direccion}</div>
+                        
                         <div class="action-buttons">
-    <a href="tel:${student.telefono}" class="btn btn-phone"><i class="fa-solid fa-phone"></i> Llamar</a>
-    <a href="https://t.me{student.telegram}" target="_blank" class="btn btn-telegram"><i class="fa-solid fa-paper-plane"></i> Telegram</a>
-    <a href="${student.documento}" target="_blank" class="btn btn-doc"><i class="fa-solid fa-file-pdf"></i> Ver Cédula Adjunta</a>
-</div>
+                            <a href="tel:${student.telefono}" class="btn btn-phone"><i class="fa-solid fa-phone"></i> Llamar</a>
