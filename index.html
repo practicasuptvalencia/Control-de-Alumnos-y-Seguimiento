@@ -173,7 +173,6 @@
     </div>
 
     <script>
-        // Dirección configurada para leer la hoja sin importar el orden o ID
         const GOOGLE_SHEET_CSV_URL = "https://google.com";
         let studentsData = [];
 
@@ -192,7 +191,6 @@
                 const lines = data.split(/\r?\n/);
                 if (lines.length === 0) return;
 
-                // Captura exacta de las columnas en plural según tu imagen
                 const headers = splitCSVLine(lines[0]).map(h => h.toLowerCase().trim());
                 
                 const idxNombres = headers.findIndex(h => h.includes('nombres'));
@@ -215,7 +213,6 @@
                     const nombreReal = idxNombres !== -1 ? row[idxNombres] : '';
                     const apellidoReal = idxApellidos !== -1 ? row[idxApellidos] : '';
                     
-                    // Si el campo numérico del alumno tiene un número pero no hay nombre, saltar fila vacía
                     if (!nombreReal && !apellidoReal) continue;
 
                     studentsData.push({
@@ -265,3 +262,4 @@
                         
                         <div class="action-buttons">
                             <a href="tel:${student.telefono}" class="btn btn-phone"><i class="fa-solid fa-phone"></i> Llamar</a>
+                            <a href="https://t.me{student.telegram.replace(/[@- ]/g, '')}" target="_blank" class="btn btn-telegram"><i class="fa-solid fa-paper-plane"></i> Telegram</a>
