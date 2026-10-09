@@ -166,6 +166,7 @@
     <div class="container" id="studentsContainer">
         <p class="status-msg">Cargando información en tiempo real...</p>
     </div>
+
     <script>
     const GOOGLE_SHEET_CSV_URL = "https://google.com"; 
     
@@ -197,6 +198,7 @@
             
             let text = await response.text();
             text = text.replace(/^\ufeff/, '');
+            
             const lines = text.split(\(/\r\)?\n/);
             if (lines.length === 0) return;
 
