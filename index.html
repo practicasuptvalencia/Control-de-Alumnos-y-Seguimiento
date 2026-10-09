@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Consulta de Alumnos</title>
-    <!-- Iconos correctos para los botones -->
     <link rel="stylesheet" href="https://cloudflare.com">
     <style>
         :root {
@@ -174,7 +173,7 @@
     </div>
 
     <script>
-        // Enlace oficial de tu hoja de cálculo restituido
+        // Dirección configurada para leer la hoja sin importar el orden o ID
         const GOOGLE_SHEET_CSV_URL = "https://google.com";
         let studentsData = [];
 
@@ -186,27 +185,26 @@
         async function fetchStudents() {
             try {
                 const response = await fetch(GOOGLE_SHEET_CSV_URL);
-                if (!response.ok) throw new Error("No se pudo conectar");
+                if (!response.ok) throw new Error("Error de conexión");
                 let data = await response.text();
                 
-                // Limpieza del formato invisible BOM de Google Sheets
                 data = data.replace(/^\ufeff/, '');
-
                 const lines = data.split(/\r?\n/);
                 if (lines.length === 0) return;
 
+                // Captura exacta de las columnas en plural según tu imagen
                 const headers = splitCSVLine(lines[0]).map(h => h.toLowerCase().trim());
                 
-                const idxNombres = headers.findIndex(h => h.includes('nombre'));
-                const idxApellidos = headers.findIndex(h => h.includes('apellido'));
-                const idxCedula = headers.findIndex(h => h.includes('cédula') || h.includes('cedula') || h.includes('ci') || h.includes('identidad'));
+                const idxNombres = headers.findIndex(h => h.includes('nombres'));
+                const idxApellidos = headers.findIndex(h => h.includes('apellidos'));
+                const idxCedula = headers.findIndex(h => h.includes('cédula') || h.includes('cedula') || h.includes('identidad'));
                 const idxPnf = headers.findIndex(h => h.includes('pnf'));
                 const idxPeriodo = headers.findIndex(h => h.includes('período') || h.includes('periodo'));
-                const idxCorreo = headers.findIndex(h => h.includes('correo') || h.includes('email'));
+                const idxCorreo = headers.findIndex(h => h.includes('correo'));
                 const idxTelefono = headers.findIndex(h => h.includes('teléfono') || h.includes('telefono'));
                 const idxTelegram = headers.findIndex(h => h.includes('telegram'));
                 const idxDireccion = headers.findIndex(h => h.includes('dirección') || h.includes('direccion'));
-                const idxDocumento = headers.findIndex(h => h.includes('documento') || h.includes('archivo') || h.includes('adjuntar'));
+                const idxDocumento = headers.findIndex(h => h.includes('documento') || h.includes('adjuntar'));
 
                 studentsData = [];
 
@@ -217,6 +215,7 @@
                     const nombreReal = idxNombres !== -1 ? row[idxNombres] : '';
                     const apellidoReal = idxApellidos !== -1 ? row[idxApellidos] : '';
                     
+                    // Si el campo numérico del alumno tiene un número pero no hay nombre, saltar fila vacía
                     if (!nombreReal && !apellidoReal) continue;
 
                     studentsData.push({
