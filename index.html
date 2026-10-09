@@ -176,62 +176,65 @@
         const GOOGLE_SHEET_CSV_URL = "https://google.com";
         let studentsData = [];
 
-        function splitCSVLine(line) {
-            let matches = line.match(/(".*?"|[^,\r\n]+)(?=\s*,|\s*$)?/g) || [];
-            return matches.map(val => val.replace(/^"|"$/g, '').trim());
+        function parseCSVLine(line) {
+            let result = [];
+            let current = '';
+            let inQuotes = false;
+            
+            for (let i = 0; i < line.length; i++) {
+                let char = line[i];
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                    result.push(current.trim());
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            result.push(current.trim());
+            return result;
         }
 
         async function fetchStudents() {
             try {
                 const response = await fetch(GOOGLE_SHEET_CSV_URL);
-                if (!response.ok) throw new Error("Error de conexión");
-                let data = await response.text();
+                if (!response.ok) throw new Error("Falla de red");
+                let text = await response.text();
                 
-                data = data.replace(/^\ufeff/, '');
-                const lines = data.split(/\r?\n/);
+                text = text.replace(/^\ufeff/, '');
+                const lines = text.split(/\r?\n/);
                 if (lines.length === 0) return;
-
-                const headers = splitCSVLine(lines[0]).map(h => h.toLowerCase().trim());
-                
-                const idxNombres = headers.findIndex(h => h.includes('nombres'));
-                const idxApellidos = headers.findIndex(h => h.includes('apellidos'));
-                const idxCedula = headers.findIndex(h => h.includes('cédula') || h.includes('cedula') || h.includes('identidad'));
-                const idxPnf = headers.findIndex(h => h.includes('pnf'));
-                const idxPeriodo = headers.findIndex(h => h.includes('período') || h.includes('periodo'));
-                const idxCorreo = headers.findIndex(h => h.includes('correo'));
-                const idxTelefono = headers.findIndex(h => h.includes('teléfono') || h.includes('telefono'));
-                const idxTelegram = headers.findIndex(h => h.includes('telegram'));
-                const idxDireccion = headers.findIndex(h => h.includes('dirección') || h.includes('direccion'));
-                const idxDocumento = headers.findIndex(h => h.includes('documento') || h.includes('adjuntar'));
 
                 studentsData = [];
 
+                // Mapeo directo por posición física de columna (A=0, B=1, C=2...) independientemente del título
                 for (let i = 1; i < lines.length; i++) {
                     if (!lines[i].trim()) continue;
                     
-                    const row = splitCSVLine(lines[i]);
-                    const nombreReal = idxNombres !== -1 ? row[idxNombres] : '';
-                    const apellidoReal = idxApellidos !== -1 ? row[idxApellidos] : '';
+                    const row = parseCSVLine(lines[i]);
                     
-                    if (!nombreReal && !apellidoReal) continue;
+                    // Columna B (índice 1) es Nombres. Si está vacía, ignoramos la fila
+                    const nombreReal = row[1];
+                    if (!nombreReal || nombreReal.toLowerCase().includes('nombres')) continue;
 
                     studentsData.push({
-                        nombres: nombreReal || 'Sin nombre',
-                        apellidos: apellidoReal || '',
-                        cedula: idxCedula !== -1 ? row[idxCedula] : 'N/A',
-                        pnf: idxPnf !== -1 ? row[idxPnf] : 'General',
-                        periodo: idxPeriodo !== -1 ? row[idxPeriodo] : 'N/A',
-                        correo: idxCorreo !== -1 ? row[idxCorreo] : 'N/A',
-                        direccion: idxDireccion !== -1 ? row[idxDireccion] : 'N/A',
-                        telefono: idxTelefono !== -1 ? row[idxTelefono] : '',
-                        telegram: idxTelegram !== -1 ? row[idxTelegram] : '',
-                        documento: idxDocumento !== -1 ? row[idxDocumento] : '#'
+                        nombres: nombreReal,
+                        apellidos: row[2] || '',                    // Columna C
+                        cedula: row[3] || 'N/A',                    // Columna D
+                        documento: row[4] || '#',                   // Columna E
+                        pnf: row[5] || 'General',                   // Columna F
+                        periodo: row[6] || 'N/A',                   // Columna G
+                        correo: row[7] || 'N/A',                    // Columna H
+                        telefono: row[8] || '',                     // Columna I
+                        telegram: row[9] || '',                     // Columna J
+                        direccion: row[10] || 'N/A'                  // Columna K
                     });
                 }
 
                 renderStudents(studentsData);
             } catch (error) {
-                document.getElementById('studentsContainer').innerHTML = `<p class="status-msg" style="color:red; font-weight:bold;">⚠️ Error al sincronizar con Google Sheets.</p>`;
+                document.getElementById('studentsContainer').innerHTML = `<p class="status-msg" style="color:red; font-weight:bold;">⚠️ Error de conexión de datos.</p>`;
                 console.error(error);
             }
         }
@@ -263,3 +266,19 @@
                         <div class="action-buttons">
                             <a href="tel:${student.telefono}" class="btn btn-phone"><i class="fa-solid fa-phone"></i> Llamar</a>
                             <a href="https://t.me{student.telegram.replace(/[@- ]/g, '')}" target="_blank" class="btn btn-telegram"><i class="fa-solid fa-paper-plane"></i> Telegram</a>
+                            <a href="${student.documento !== '#' ? student.documento : 'javascript:alert(\'No hay documento disponible\')'}" target="_blank" class="btn btn-doc"><i class="fa-solid fa-file-pdf"></i> Ver Cédula Adjunta</a>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function toggleCard(cardElement) {
+            document.querySelectorAll('.card').forEach(c => {
+                if (c !== cardElement) c.classList.remove('active');
+            });
+            cardElement.classList.toggle('active');
+        }
+
+        document.getElementById('searchInput').addEventListener('input', (e) => {
